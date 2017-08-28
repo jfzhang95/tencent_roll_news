@@ -35,7 +35,7 @@ class TencentNewsSpider(Spider):
     date_time = datetime.datetime.now().strftime('%Y-%m-%d')
     time_stamp = int(round(time.time()*1000))
     def start_requests(self):
-        yield Request(self.list_url.format(date=self.date_time, page='1', time_stamp=str(self.time_stamp)), self.parse_list)
+        yield Request(self.list_url.format(date='2017-06-07', page='1', time_stamp=str(self.time_stamp)), self.parse_list)
 
     def parse_list(self, response):
         results = json.loads(response.text[9:-1])
@@ -54,7 +54,7 @@ class TencentNewsSpider(Spider):
         list_count = results['data']['count']
         if list_page < list_count:
             time_stamp = int(round(time.time() * 1000))
-            yield Request(self.list_url.format(date=self.date_time, page=str(list_page+1), time_stamp=str(time_stamp)), self.parse_list)
+            yield Request(self.list_url.format(date='2017-06-07', page=str(list_page+1), time_stamp=str(time_stamp)), self.parse_list)
 
     def parse_news(self, response):
         sel = Selector(response)
