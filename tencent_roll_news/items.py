@@ -20,3 +20,4 @@ class TencentRollNewsItem(Item):
     comments = Field()
     source = Field()
     column = Field()
+    category = Field()

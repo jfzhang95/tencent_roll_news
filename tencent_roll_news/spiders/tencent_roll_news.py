@@ -23,35 +23,41 @@ def ListCombiner(lst):
 
 class TencentNewsSpider(Spider):
     name = 'tencent_news_spider'
-    allowed_domains = ['news.qq.com']
+    # allowed_domains = ['news.qq.com']
     start_urls = ['http://news.qq.com/articleList/rolls/']
     url_pattern = r'(.*)/a/(\d{8})/(\d+)\.htm'
 
-    list_url = 'http://roll.news.qq.com/interface/cpcroll.php?callback=rollback&site=news&mode=1&cata=&date={date}&page={page}&_={time_stamp}'
+    list_url = 'http://roll.news.qq.com/interface/cpcroll.php?callback=rollback&site={class_}&mode=1&cata=&date={date}&page={page}&_={time_stamp}'
     date_time = datetime.datetime.now().strftime('%Y-%m-%d')
     time_stamp = int(round(time.time()*1000))
+    item_num = 0
+
     def start_requests(self):
-        yield Request(self.list_url.format(date=self.date_time, page='1', time_stamp=str(self.time_stamp)), self.parse_list)
+        categories = ['news', 'ent', 'sports', 'finance', 'tech', 'games', 'auto', 'edu', 'house']
+        for category in categories:
+            yield Request(self.list_url.format(class_=category, date=self.date_time, page='1', time_stamp=str(self.time_stamp)), callback=self.parse_list, dont_filter=True, meta={'category':category})
 
     def parse_list(self, response):
         results = json.loads(response.text[9:-1])
         article_info = results['data']['article_info']
+        category = response.meta['category']
         for element in article_info:
             time_ = element['time']
             title = element['title']
             column = element['column']
             url = element['url']
             if column != u'图片':
-                yield Request(url, self.parse_news, meta={'column':column,
+                yield Request(url, callback=self.parse_news, meta={'column':column,
                                                           'url':url,
                                                           'title':title,
-                                                          'time':time_
-                                                         })
+                                                          'time':time_,
+                                                          'category':category
+                                                         }, dont_filter=True)
         list_page = results['data']['page']
         list_count = results['data']['count']
         if list_page < list_count:
             time_stamp = int(round(time.time() * 1000))
-            yield Request(self.list_url.format(date=self.date_time, page=str(list_page+1), time_stamp=str(time_stamp)), self.parse_list)
+            yield Request(self.list_url.format(class_=category, date=self.date_time, page=str(list_page+1), time_stamp=str(time_stamp)), callback=self.parse_list, meta={'category':category}, dont_filter=True)
 
     def parse_news(self, response):
         sel = Selector(response)
@@ -60,6 +66,7 @@ class TencentNewsSpider(Spider):
         title = response.meta['title']
         column = response.meta['column']
         time_ = response.meta['time']
+        category = response.meta['category']
 
         pattern = re.match(self.url_pattern, str(response.url))
         source = pattern.group(1)
@@ -75,6 +82,7 @@ class TencentNewsSpider(Spider):
         except:
             item = TencentRollNewsItem()
             item['source'] = source
+            item['category'] = category
             item['time'] = time_
             item['date'] = date
             item['contents'] = contents
@@ -86,7 +94,7 @@ class TencentNewsSpider(Spider):
             return item
 
         comment_url = 'http://coral.qq.com/article/{}/comment?commentid=0&reqnum=1&tag=&callback=mainComment&_=1389623278900'.format(cmt_id)
-        yield Request(comment_url, self.parse_comment, dont_filter=True, meta={'source': source,
+        yield Request(comment_url, callback=self.parse_comment, dont_filter=True, meta={'source': source,
                                                                                'date': date,
                                                                                'newsId': newsId,
                                                                                'url': url,
@@ -94,17 +102,15 @@ class TencentNewsSpider(Spider):
                                                                                'contents': contents,
                                                                                'time': time_,
                                                                                'column': column,
+                                                                               'category': category
                                                                                })
-
-
-
-
     def parse_comment(self, response):
         if re.findall(r'"total":(\d*)\,', response.text):
             comments = re.findall(r'"total":(\d*)\,', response.text)[0]
         else:
             comments = 0
         item = TencentRollNewsItem()
+        item['category'] = response.meta['category']
         item['source'] = response.meta['source']
         item['time'] = response.meta['time']
         item['date'] = response.meta['date']
