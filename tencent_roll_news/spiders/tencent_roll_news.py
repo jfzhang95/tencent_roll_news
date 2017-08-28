@@ -13,6 +13,7 @@ import json
 import re
 from scrapy import Request, Spider
 import time
+import datetime
 import requests
 from tencent_roll_news.items import TencentRollNewsItem
 
@@ -30,10 +31,11 @@ class TencentNewsSpider(Spider):
     start_urls = ['http://news.qq.com/articleList/rolls/']
     url_pattern = r'(.*)/a/(\d{8})/(\d+)\.htm'
 
-    list_url = 'http://roll.news.qq.com/interface/cpcroll.php?callback=rollback&site=news&mode=1&cata=&date={date}&page={page}&_=1503888509787'
-
+    list_url = 'http://roll.news.qq.com/interface/cpcroll.php?callback=rollback&site=news&mode=1&cata=&date={date}&page={page}&_={time_stamp}'
+    date_time = datetime.datetime.now().strftime('%Y-%m-%d')
+    time_stamp = int(round(time.time()*1000))
     def start_requests(self):
-        yield Request(self.list_url.format(date='2017-08-28', page='1'), self.parse_list)
+        yield Request(self.list_url.format(date=self.date_time, page='1', time_stamp=str(self.time_stamp)), self.parse_list)
 
     def parse_list(self, response):
         results = json.loads(response.text[9:-1])
@@ -51,7 +53,8 @@ class TencentNewsSpider(Spider):
         list_page = results['data']['page']
         list_count = results['data']['count']
         if list_page < list_count:
-            yield Request(self.list_url.format(date='2017-08-28', page=str(list_page+1)), self.parse_list)
+            time_stamp = int(round(time.time() * 1000))
+            yield Request(self.list_url.format(date=self.date_time, page=str(list_page+1), time_stamp=str(time_stamp)), self.parse_list)
 
     def parse_news(self, response):
         sel = Selector(response)
