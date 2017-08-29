@@ -19,7 +19,7 @@ NEWSPIDER_MODULE = 'tencent_roll_news.spiders'
 #USER_AGENT = 'tencent_roll_news (+http://www.yourdomain.com)'
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -45,7 +45,7 @@ DEFAULT_REQUEST_HEADERS = {
     'Accept-Encoding': 'gzip, deflate',
     'Connection': 'keep-alive',
     # 'Host': 'roll.news.qq.com',
-    'Referer': 'http://news.qq.com/articleList/rolls/',
+    # 'Referer': 'http://tech.qq.com/articleList/rolls/',
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36',
 }
 
@@ -69,9 +69,9 @@ DEFAULT_REQUEST_HEADERS = {
 
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'tencent_roll_news.pipelines.TencentRollNewsPipeline': 300,
-#}
+ITEM_PIPELINES = {
+   'tencent_roll_news.pipelines.TencentRollNewsPipeline': 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
