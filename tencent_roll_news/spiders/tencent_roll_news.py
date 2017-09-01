@@ -36,12 +36,13 @@ class TencentNewsSpider(Spider):
 
     def start_requests(self):
         categories = ['tech', 'news', 'ent', 'sports', 'finance', 'games', 'auto', 'edu', 'house']
-        # categories = ['house']
-        for category in categories:
-            DEFAULT_REQUEST_HEADERS['Accept'] = '*/*'
-            DEFAULT_REQUEST_HEADERS['Host'] = 'roll.news.qq.com'
-            DEFAULT_REQUEST_HEADERS['Referer'] = 'http://{}.qq.com/articleList/rolls/'.format(category)
-            yield Request(self.list_url.format(class_=category, date='2017-08-28', page='1', time_stamp=str(self.time_stamp)), callback=self.parse_list, meta={'category':category}, headers=DEFAULT_REQUEST_HEADERS)
+        dates = ['2017-08-30','2017-08-29','2017-08-28','2017-08-27','2017-08-26']
+        for date in dates:
+            for category in categories:
+                DEFAULT_REQUEST_HEADERS['Accept'] = '*/*'
+                DEFAULT_REQUEST_HEADERS['Host'] = 'roll.news.qq.com'
+                DEFAULT_REQUEST_HEADERS['Referer'] = 'http://{}.qq.com/articleList/rolls/'.format(category)
+                yield Request(self.list_url.format(class_=category, date=date, page='1', time_stamp=str(self.time_stamp)), callback=self.parse_list, meta={'category':category, 'date':date}, headers=DEFAULT_REQUEST_HEADERS)
 
     def parse_list(self, response):
         results = json.loads(response.text[9:-1])
@@ -68,7 +69,7 @@ class TencentNewsSpider(Spider):
         list_count = results['data']['count']
         if list_page < list_count:
             time_stamp = int(round(time.time() * 1000))
-            yield Request(self.list_url.format(class_=category, date='2017-08-28', page=str(list_page+1), time_stamp=str(time_stamp)), callback=self.parse_list, meta={'category':category}, dont_filter=True)
+            yield Request(self.list_url.format(class_=category, date=response.meta['date'], page=str(list_page+1), time_stamp=str(time_stamp)), callback=self.parse_list, meta={'category':category}, dont_filter=True)
 
     def parse_news(self, response):
         sel = Selector(response)
